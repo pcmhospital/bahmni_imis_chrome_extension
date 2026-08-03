@@ -1,0 +1,219 @@
+/* IMIS Sync — styles (namespaced with imis- to avoid clashing with Bahmni) */
+
+#imis-sync-button { cursor: pointer; }
+
+.imis-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Open Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+.imis-modal {
+  width: 640px;
+  max-width: 94vw;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
+  color: #333;
+  font-size: 13px;
+}
+
+.imis-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #669933;
+  color: #fff;
+  border-radius: 6px 6px 0 0;
+}
+
+.imis-title { font-size: 15px; font-weight: 700; }
+
+.imis-close {
+  background: transparent;
+  border: 0;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.imis-close:hover { color: #d6f0c0; }
+
+.imis-body { padding: 16px; }
+
+.imis-loading { padding: 30px 10px; text-align: center; color: #666; }
+
+.imis-error { padding: 24px 10px; text-align: center; color: #b32727; font-weight: 600; }
+
+.imis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.imis-card {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  background: #fafafa;
+  min-height: 54px;
+}
+
+.imis-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  grid-row: span 2;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.imis-photo img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.imis-avatar {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  background: #669933;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  font-weight: 700;
+}
+
+.imis-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.imis-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #222;
+  word-break: break-word;
+}
+
+.imis-status-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  background: #f6f8f2;
+  border: 1px solid #dfe8d2;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.imis-status-row .imis-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+
+.imis-status-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.imis-badge {
+  display: inline-block;
+  padding: 8px 26px;
+  border-radius: 20px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.imis-badge-active { background: #2e7d32; color: #fff; }
+
+.imis-badge-inactive { background: #c0392b; color: #fff; }
+
+.imis-copay, .imis-disease {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 14px;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+}
+
+.imis-copay-yes { background: #e8f5e9; border-color: #2e7d32; color: #1b5e20; }
+
+.imis-copay-no { background: #f5f5f5; border-color: #bbb; color: #555; }
+
+.imis-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #669933;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.imis-balance {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+
+.imis-cell { min-width: 0; }
+
+.imis-nodata { color: #888; padding: 12px 0; text-align: center; }
+
+.imis-toast {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: #444;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  z-index: 2147483647;
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: all 0.25s ease;
+  pointer-events: none;
+  font-family: "Open Sans", "Helvetica Neue", Arial, sans-serif;
+}
+
+.imis-toast-show { opacity: 1; transform: translateY(0); }
