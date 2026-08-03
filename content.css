@@ -217,3 +217,50 @@
 }
 
 .imis-toast-show { opacity: 1; transform: translateY(0); }
+
+/* ===== Sync section (bottom of popup) ===== */
+
+.imis-sync-section {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 14px;
+  margin-top: 6px;
+}
+
+.imis-sync-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c0392b;
+  margin-bottom: 8px;
+}
+
+.imis-sync-item {
+  font-size: 13px;
+  color: #444;
+  padding: 3px 0 3px 6px;
+}
+
+.imis-sync-all-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 0;
+  background: #669933;
+  border: 0;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: "Open Sans", "Helvetica Neue", Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.imis-sync-all-btn:hover { background: #55862a; }
+
+.imis-sync-done {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1b5e20;
+  padding: 4px 0;
+}

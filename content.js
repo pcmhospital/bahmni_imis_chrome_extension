@@ -161,6 +161,8 @@
     var addr = (r.address || [])[0] || {};
     return {
       name: [given, nameObj.family || ""].filter(Boolean).join(" ").trim(),
+      givenName: given,
+      familyName: nameObj.family || "",
       birthDate: r.birthDate || "",
       gender: r.gender || "",
       phone: phone,
@@ -205,6 +207,7 @@
     modal.appendChild(head);
     modal.appendChild(body);
     overlay.appendChild(modal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) removeOverlay(); });
     document.body.appendChild(overlay);
   }
 
@@ -282,6 +285,30 @@
         body.appendChild(card);
       });
     }
+
+    /* sync: which fields differ + one button to sync all */
+    var syncDiffs = patient ? compareFields(patient, elig.active, nhis) : [];
+    var syncSection = el("div", "imis-sync-section");
+    if (syncDiffs.length) {
+      syncSection.appendChild(el("div", "imis-sync-title", "Sync \u2014 " + syncDiffs.length + " field" + (syncDiffs.length === 1 ? "" : "s") + " differ from IMIS:"));
+      syncDiffs.forEach(function (d) {
+        syncSection.appendChild(el("div", "imis-sync-item", "\u2022 " + d.label));
+      });
+      var syncBtn = document.createElement("button");
+      syncBtn.type = "button";
+      syncBtn.className = "imis-sync-all-btn";
+      syncBtn.textContent = "Sync All from IMIS";
+      syncBtn.addEventListener("click", function () {
+        syncDiffs.forEach(function (d) { d.apply(); });
+        syncSection.innerHTML = "";
+        syncSection.appendChild(el("div", "imis-sync-done", "\u2713 All fields synced from IMIS."));
+        showToast("All fields synced from IMIS.");
+      });
+      syncSection.appendChild(syncBtn);
+    } else if (patient) {
+      syncSection.appendChild(el("div", "imis-sync-done", "All fields match IMIS \u2014 nothing to sync."));
+    }
+    body.appendChild(syncSection);
   }
 
   function addInfoCard(parent, label, value) {
@@ -306,6 +333,179 @@
     var n = Number(v);
     if (isNaN(n)) return "0.00";
     return n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  /* ---------------- Sync-with-IMIS (field-level compare) ----------------
+     Compare the IMIS patient data against the Bahmni registration form.
+     Returns an array of diffs: { label, apply } where apply() fills that
+     single field. Address and Claim Id are intentionally skipped. */
+
+  var SYNC_FIELD_SPECS = [
+    { ids: ["givenName", "given name", "Given Name", "firstname", "FirstName"], labelRe: /given\s*name|first\s*name|firstname/i },
+    { ids: ["familyName", "family name", "Family Name", "lastname", "LastName", "surname"], labelRe: /family\s*name|last\s*name|lastname|surname/i },
+    { ids: ["gender", "Gender", "sex", "Sex"], labelRe: /^\s*gender\s*$|^\s*sex\s*$/i },
+    { ids: ["ageYears", "ageYear", "Year", "year", "Age Year", "Birth Year"], labelRe: /age|years|year/i },
+    { ids: ["Contact Number", "contact number", "Phone Number", "phoneNumber", "PhoneNumber", "telephone"], labelRe: /contact\s*number|phone|telephone|mobile/i },
+    { ids: [NHIS_INPUT_ID, "nhis", "NHIS", "insurance number"], labelRe: /nhis|insurance\s*number/i }
+  ];
+
+  function locateField(spec) {
+    var ctrl = null;
+    for (var i = 0; i < spec.ids.length && !ctrl; i++) {
+      ctrl = document.getElementById(spec.ids[i]);
+    }
+    if (!ctrl) {
+      var labels = document.querySelectorAll("label");
+      for (var j = 0; j < labels.length && !ctrl; j++) {
+        var txt = labels[j].textContent || "";
+        if (spec.labelRe.test(txt)) {
+          var forId = labels[j].htmlFor;
+          if (forId && document.getElementById(forId)) {
+            ctrl = document.getElementById(forId);
+          } else {
+            var wrap = labels[j].closest(".field-group, .control-group, .field, .item");
+            if (wrap) ctrl = wrap.querySelector("input, select, textarea");
+          }
+        }
+      }
+    }
+    return ctrl && ctrl.disabled === false ? ctrl : null;
+  }
+
+  function normText(s) {
+    return String(s || "").toUpperCase().replace(/\s+/g, " ").trim();
+  }
+
+  function titleCase(s) {
+    return String(s || "").toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
+  function digitsOnly(s) {
+    return String(s || "").replace(/[^\d]/g, "");
+  }
+
+  function parseAnyDate(s) {
+    if (!s) return null;
+    var str = String(s).trim();
+    var m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return { y: +m[1], mo: +m[2], d: +m[3] };
+    m = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    if (m) return { y: +m[3], mo: +m[2], d: +m[1] };
+    m = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2})$/);
+    if (m) return { y: 2000 + +m[3], mo: +m[2], d: +m[1] };
+    return null;
+  }
+
+  function dateToForm(iso) {
+    if (!iso) return "";
+    var p = String(iso).match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (!p) return iso;
+    return p[3] + "-" + p[2] + "-" + p[1];
+  }
+
+  function normalizeGender(s) {
+    var t = normText(s);
+    if (t === "M" || t === "MALE") return "M";
+    if (t === "F" || t === "FEMALE") return "F";
+    if (t === "O" || t === "OTHER") return "O";
+    return t;
+  }
+
+  function dispatchEvents(ctrl) {
+    ["input", "change"].forEach(function (type) {
+      try { ctrl.dispatchEvent(new Event(type, { bubbles: true })); } catch (e) { /* noop */ }
+    });
+  }
+
+  function setTextValue(ctrl, value) {
+    ctrl.value = value;
+    dispatchEvents(ctrl);
+  }
+
+  function chooseOption(ctrl, imisText, truthy) {
+    if (!ctrl || !ctrl.options) return false;
+    var opts = ctrl.options;
+    for (var i = 0; i < opts.length; i++) {
+      if (normText(opts[i].text) === normText(imisText) || normText(opts[i].value) === normText(imisText)) {
+        ctrl.value = opts[i].value;
+        dispatchEvents(ctrl);
+        return true;
+      }
+    }
+    if (truthy != null) {
+      var yes = null, no = null;
+      for (var k = 0; k < opts.length; k++) {
+        if (/yes|true|active|^1$/.test(normText(opts[k].text))) yes = opts[k];
+        else if (/no|false|inactive|^0$/.test(normText(opts[k].text))) no = opts[k];
+      }
+      var target = truthy ? (yes || no) : (no || yes);
+      if (target) { ctrl.value = target.value; dispatchEvents(ctrl); return true; }
+    }
+    return false;
+  }
+
+  function compareFields(patient, active, nhis) {
+    if (!patient) return [];
+
+    var givC = locateField(SYNC_FIELD_SPECS[0]);
+    var famC = locateField(SYNC_FIELD_SPECS[1]);
+    var genderC = locateField(SYNC_FIELD_SPECS[2]);
+    var yearC = locateField(SYNC_FIELD_SPECS[3]);
+    var phoneC = locateField(SYNC_FIELD_SPECS[4]);
+    var nhisC = locateField(SYNC_FIELD_SPECS[5]);
+    var diffs = [];
+
+    function add(label, fn) { diffs.push({ label: label, apply: fn }); }
+
+    // Name (title-cased)
+    if (givC) {
+      var formName = [givC.value, famC ? famC.value : ""].filter(Boolean).join(" ");
+      if (normText(formName) !== normText(patient.name)) {
+        add("Name", function () {
+          setTextValue(givC, titleCase(patient.givenName || ""));
+          if (famC) setTextValue(famC, titleCase(patient.familyName || ""));
+        });
+      }
+    }
+
+    // Gender
+    if (genderC) {
+      var imisG = normalizeGender(patient.gender);
+      if (imisG && normText(genderC.value) !== imisG) {
+        add("Gender", function () {
+          if (genderC.tagName === "SELECT") chooseOption(genderC, patient.gender);
+          else setTextValue(genderC, imisG);
+        });
+      }
+    }
+
+    // Age in years (computed from IMIS birthDate)
+    if (yearC) {
+      var imisAge = calcAge(patient.birthDate);
+      var curYear = String(yearC.value).trim();
+      if (imisAge && curYear !== imisAge) {
+        add("Age", function () {
+          setTextValue(yearC, imisAge);
+          showToast("Age synced as " + imisAge + " years.");
+        });
+      }
+    }
+
+    // Phone
+    if (phoneC) {
+      if (patient.phone && digitsOnly(phoneC.value) !== digitsOnly(patient.phone)) {
+        add("Phone", function () { setTextValue(phoneC, patient.phone); });
+      }
+    }
+
+    // NHIS number
+    if (nhisC) {
+      if (digitsOnly(nhisC.value) !== digitsOnly(nhis)) {
+        add("NHIS Number", function () { setTextValue(nhisC, nhis); });
+      }
+    }
+
+    return diffs;
   }
 
   function showToast(msg) {
