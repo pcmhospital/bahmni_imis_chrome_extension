@@ -2,5 +2,5 @@
   "version": "1.0.5",
   "url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/tag/v1.0.5",
   "zip_url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/download/v1.0.5/IMIS-Sync-Extension.zip",
-  "changelog": "Auto-reload from network share (\\192.168.1.32\IMIS-App)."
+  "changelog": "Auto-reload from network share."
 }
