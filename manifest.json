@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "IMIS Sync",
-  "version": "1.2.0",
+  "version": "1.0.0",
   "description": "Adds an IMIS Sync button to Bahmni Registration that checks NHIS patient eligibility and shows patient status from IMIS.",
   "icons": {
     "16": "icons/icon16.png",

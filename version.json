@@ -1,6 +1,6 @@
 {
-  "version": "1.2.0",
-  "url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/tag/v1.2.0",
-  "zip_url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/download/v1.2.0/myext-1.2.0.zip",
-  "changelog": "Initial release with IMIS Sync button and self-update notifications."
+  "version": "1.0.0",
+  "url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/tag/v1.0.0",
+  "zip_url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/download/v1.0.0/IMIS-Sync-Extension-1.0.0.zip",
+  "changelog": "First official release: IMIS Sync button, patient info popup, eligibility/balance display, field-level sync (Name, Gender, Age, Phone, NHIS Number), title-cased names, backdrop click to close."
 }
