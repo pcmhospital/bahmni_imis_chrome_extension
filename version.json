@@ -1,6 +1,6 @@
 {
-  "version": "1.0.3",
-  "url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/tag/v1.0.3",
-  "zip_url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/download/v1.0.3/IMIS-Sync-Extension.zip",
-  "changelog": "Settings page for GitHub token, auto-update from private repo."
+  "version": "1.0.4",
+  "url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/tag/v1.0.4",
+  "zip_url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/download/v1.0.4/IMIS-Sync-Extension.zip",
+  "changelog": "Auto-updater: PowerShell script + Task Scheduler hourly check."
 }

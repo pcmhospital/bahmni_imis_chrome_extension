@@ -68,8 +68,11 @@
         return resp.json();
       })
       .then(function (apiData) {
-        // GitHub API returns file content as base64 — decode it
-        const json = decodeURIComponent(escape(atob(apiData.content.replace(/\n/g, ""))));
+        // GitHub API returns file content as base64 — decode it safely (handles multi-byte UTF-8)
+        const raw = atob(apiData.content.replace(/\n/g, ""));
+        const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        const json = new TextDecoder("utf-8").decode(bytes);
         return JSON.parse(json);
       })
       .then(function (data) {
