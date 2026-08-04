@@ -9,6 +9,7 @@
     "128": "icons/icon128.png"
   },
   "action": {},
+  "options_page": "options.html",
   "background": {
     "service_worker": "background.js"
   },

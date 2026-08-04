@@ -6,7 +6,6 @@
   "use strict";
 
   const VERSION_URL = "https://api.github.com/repos/pcmhospital/bahmni_imis_chrome_extension/contents/version.json";
-  const VERSION_TOKEN = "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";
   const CHECK_INTERVAL_MINUTES = 240;
   const ALARM_NAME = "checkUpdate";
   const BADGE_TEXT = "UPD";
@@ -53,11 +52,17 @@
   }
 
   function checkForUpdate() {
-    const url = VERSION_URL + "?t=" + Date.now();
-    fetch(url, {
-      cache: "no-store",
-      headers: { "Authorization": "Bearer " + VERSION_TOKEN, "Accept": "application/vnd.github.v3+json" }
-    })
+    chrome.storage.local.get("githubToken", function (res) {
+      const token = res.githubToken;
+      if (!token) {
+        console.log("[IMIS Sync] No GitHub token configured — skipping update check. Set one in extension Options.");
+        return;
+      }
+      const url = VERSION_URL + "?t=" + Date.now();
+      fetch(url, {
+        cache: "no-store",
+        headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github.v3+json" }
+      })
       .then(function (resp) {
         if (!resp.ok) throw new Error("HTTP " + resp.status);
         return resp.json();
@@ -76,6 +81,7 @@
       .catch(function (err) {
         console.log("[IMIS Sync] Update check failed:", err && err.message ? err.message : err);
       });
+    });
   }
 
   chrome.runtime.onInstalled.addListener(function () {
