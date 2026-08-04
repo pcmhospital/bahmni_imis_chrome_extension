@@ -5,7 +5,8 @@
 (function () {
   "use strict";
 
-  const VERSION_URL = "https://cdn.jsdelivr.net/gh/pcmhospital/bahmni_imis_chrome_extension@main/version.json";
+  const VERSION_URL = "https://api.github.com/repos/pcmhospital/bahmni_imis_chrome_extension/contents/version.json";
+  const VERSION_TOKEN = "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";
   const CHECK_INTERVAL_MINUTES = 240;
   const ALARM_NAME = "checkUpdate";
   const BADGE_TEXT = "UPD";
@@ -53,10 +54,18 @@
 
   function checkForUpdate() {
     const url = VERSION_URL + "?t=" + Date.now();
-    fetch(url, { cache: "no-store" })
+    fetch(url, {
+      cache: "no-store",
+      headers: { "Authorization": "Bearer " + VERSION_TOKEN, "Accept": "application/vnd.github.v3+json" }
+    })
       .then(function (resp) {
         if (!resp.ok) throw new Error("HTTP " + resp.status);
         return resp.json();
+      })
+      .then(function (apiData) {
+        // GitHub API returns file content as base64 — decode it
+        const json = decodeURIComponent(escape(atob(apiData.content.replace(/\n/g, ""))));
+        return JSON.parse(json);
       })
       .then(function (data) {
         const latest = String(data.version || "").trim();
