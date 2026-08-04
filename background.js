@@ -1,107 +1,46 @@
-/* IMIS Sync — update checker (Manifest V3 service worker).
-   Polls a version.json via the jsDelivr CDN mirror of the GitHub repo
-   and notifies the user when a newer version is published.
-   It only reads version metadata — it never fetches or executes remote code. */
+/* IMIS Sync — auto-reload when files change on network share.
+   Extension lives at \\192.168.1.32\IMIS-App.
+   When you copy new files to the share, version.json changes
+   and this script detects it and reloads the extension. */
 (function () {
   "use strict";
 
-  const VERSION_URL = "https://api.github.com/repos/pcmhospital/bahmni_imis_chrome_extension/contents/version.json";
-  const CHECK_INTERVAL_MINUTES = 240;
-  const ALARM_NAME = "checkUpdate";
-  const BADGE_TEXT = "UPD";
-  const BADGE_COLOR = "#d93025";
+  var CHECK_MINUTES = 2;
+  var ALARM = "shareCheck";
 
-  function isNewerVersion(latest, current) {
-    const la = String(latest).split(".").map(function (p) { return parseInt(p, 10) || 0; });
-    const ca = String(current).split(".").map(function (p) { return parseInt(p, 10) || 0; });
-    const len = Math.max(la.length, ca.length);
-    for (let i = 0; i < len; i++) {
-      const l = la[i] || 0;
-      const c = ca[i] || 0;
-      if (l > c) return true;
-      if (l < c) return false;
+  function isNewer(a, b) {
+    var pa = String(a).split(".").map(function (p) { return parseInt(p, 10) || 0; });
+    var pb = String(b).split(".").map(function (p) { return parseInt(p, 10) || 0; });
+    for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+      var x = pa[i] || 0, y = pb[i] || 0;
+      if (x > y) return true;
+      if (x < y) return false;
     }
     return false;
   }
 
-  function notifyUpdate(data, latest) {
-    chrome.storage.local.get("lastNotified").then(function (res) {
-      if (res.lastNotified === latest) return;
+  function check() {
+    var current = chrome.runtime.getManifest().version;
+    var url = chrome.runtime.getURL("version.json") + "?t=" + Date.now();
 
-      const updateInfo = {
-        version: latest,
-        url: data.url || "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases",
-        zip_url: data.zip_url || "",
-        changelog: data.changelog || ""
-      };
-
-      chrome.storage.local.set({ lastNotified: latest, updateInfo: updateInfo });
-
-      chrome.action.setBadgeText({ text: BADGE_TEXT });
-      chrome.action.setBadgeBackgroundColor({ color: BADGE_COLOR });
-
-      const message = (updateInfo.changelog || "A new version of IMIS Sync is available.").slice(0, 200);
-      chrome.notifications.create("imis-update-" + latest, {
-        type: "basic",
-        iconUrl: "icons/icon128.png",
-        title: "v" + latest + " available",
-        message: message,
-        priority: 1
-      });
-    });
-  }
-
-  function checkForUpdate() {
-    chrome.storage.local.get("githubToken", function (res) {
-      const token = res.githubToken;
-      if (!token) {
-        console.log("[IMIS Sync] No GitHub token configured — skipping update check. Set one in extension Options.");
-        return;
-      }
-      const url = VERSION_URL + "?t=" + Date.now();
-      fetch(url, {
-        cache: "no-store",
-        headers: { "Authorization": "Bearer " + token, "Accept": "application/vnd.github.v3+json" }
+    fetch(url, { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var v = String(d.version || "").trim();
+        if (v && isNewer(v, current)) {
+          console.log("[IMIS Sync] New version on share: " + v + " (was " + current + "). Reloading...");
+          setTimeout(function () { chrome.runtime.reload(); }, 300);
+        }
       })
-      .then(function (resp) {
-        if (!resp.ok) throw new Error("HTTP " + resp.status);
-        return resp.json();
-      })
-      .then(function (apiData) {
-        // GitHub API returns file content as base64 — decode it safely (handles multi-byte UTF-8)
-        const raw = atob(apiData.content.replace(/\n/g, ""));
-        const bytes = new Uint8Array(raw.length);
-        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-        const json = new TextDecoder("utf-8").decode(bytes);
-        return JSON.parse(json);
-      })
-      .then(function (data) {
-        const latest = String(data.version || "").trim();
-        const current = chrome.runtime.getManifest().version;
-        if (!latest || !isNewerVersion(latest, current)) return;
-        notifyUpdate(data, latest);
-      })
-      .catch(function (err) {
-        console.log("[IMIS Sync] Update check failed:", err && err.message ? err.message : err);
-      });
-    });
+      .catch(function () {});
   }
 
   chrome.runtime.onInstalled.addListener(function () {
-    chrome.alarms.create(ALARM_NAME, { periodInMinutes: CHECK_INTERVAL_MINUTES });
-    checkForUpdate();
+    chrome.alarms.create(ALARM, { periodInMinutes: CHECK_MINUTES });
+    check();
   });
 
-  chrome.alarms.onAlarm.addListener(function (alarm) {
-    if (alarm.name === ALARM_NAME) checkForUpdate();
-  });
-
-  chrome.notifications.onClicked.addListener(function (notificationId) {
-    chrome.notifications.clear(notificationId);
-    chrome.storage.local.get("updateInfo").then(function (res) {
-      if (res.updateInfo && res.updateInfo.url) {
-        chrome.tabs.create({ url: res.updateInfo.url });
-      }
-    });
+  chrome.alarms.onAlarm.addListener(function (a) {
+    if (a.name === ALARM) check();
   });
 })();
