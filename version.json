@@ -1,0 +1,6 @@
+{
+  "version": "1.2.0",
+  "url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/tag/v1.2.0",
+  "zip_url": "https://github.com/pcmhospital/bahmni_imis_chrome_extension/releases/download/v1.2.0/myext-1.2.0.zip",
+  "changelog": "Initial release with IMIS Sync button and self-update notifications."
+}
